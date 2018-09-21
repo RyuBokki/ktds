@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <!-- interface의 명이자 namespace의 명 -->
+<mapper namespace="MemberDao">
+	
+	
+	<!--  binding 변수를 받기 위해서 parameter를 받기 위해서 parameterType을 적어줌 이렇게 하면 binding이 됨 물음표를 쓰지 않고 다른방법 -->
+	<!-- parameterType 대신 alias 사용가능 -->
+	<insert id="insertNewMember" parameterType="MemberVo">
+		INSERT INTO MEMBERS (
+									  EMAIL
+									  , NAME
+									  , PASSWORD
+									  , LATEST_LOGIN
+					        ) 
+		VALUES ( 
+				 	   #{email}
+					   , #{name}
+					   , #{password}
+					   , SYSDATE
+		       )
+	</insert>
+	<!--  이거 하나 하나를 mapstatement라고 부름 -->
+	<!--  select query에만 존재하는 것 result type, result map -->
+	<!-- join이 안된다면 result Type -->
+	<select id="selectOneMember" 
+			parameterType="MemberVo"
+			resultType="MemberVo">
+		SELECT	EMAIL                 
+				, NAME          
+				, PASSWORD
+				, POINT
+				, LOGIN_FAIL_COUNT          
+		FROM	MEMBERS
+		WHERE	EMAIL = #{email} 
+		AND		PASSWORD = #{password}
+	</select>
+	<!-- map은 key값을 써야함 -->
+	<update id="updatePoint" parameterType="map">
+		UPDATE	MEMBERS
+		SET		POINT = POINT + #{point}
+		WHERE	EMAIL = #{email}
+	</update>
+	
+	<select id="isBlockUser"
+			parameterType="string"
+			resultType="_int">
+		SELECT	LOGIN_FAIL_COUNT
+		FROM	MEMBERS
+		AND		LATEST_LOGIN + 1/24 >= SYSDATE
+		AND		EMAIL = #{email}
+	</select>
+	
+	<update id="unblockUser"
+			parameterType="string">
+		UPDATE	MEMBERS
+		SET		LOGIN_FAIL_COUNT = 0
+		WHERE	EMAIL = #{email}
+	</update>
+	
+	<update id="iscreaseLoginFailCount" 
+			parameterType="string">
+		UPDATE	MEMBERS
+		SET		LOGIN_FAIL_COUNT = LOGIN_FAIL_COUNT + 1
+				, LATEST_LOGIN = SYSDATE
+		WHERE	EMAIL = #{email}
+	</update>
+
+</mapper>

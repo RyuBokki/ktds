@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+  
+<configuration>
+	<typeAliases>
+	    <!-- type에는 패키지를 포함한 클래스명 -->
+		<typeAlias type="com.ktds.member.vo.MemberVo" alias="MemberVo"/>
+		<typeAlias type="com.ktds.board.vo.BoardVo" alias="BoardVo"/>
+		<typeAlias type="com.ktds.board.vo.BoardSearchVO" alias="BoardSearchVO"/>
+		<typeAlias type="com.ktds.reply.vo.ReplyVO" alias="ReplyVO"/>
+	</typeAliases>
+</configuration>

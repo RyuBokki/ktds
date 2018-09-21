@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd">
+	
+	<!-- 공통기능 클래스 AOP에 사용됨. -->
+	<bean 	id = "daoParamAop"
+			class = "com.ktds.common.aop.DaoParamAop">
+	</bean>	
+	
+	<!-- aop:config 위에 생성한 bean이 언제 어디에서 실행될 것인지를 정의함. -->
+	<aop:config>
+		<!-- ref: 어디서 -->
+		<aop:aspect	id = "daoAspect" ref = "daoParamAop">
+			<!-- pointcut 누구한테, 여기서는 * : 모든 return type을 대상으로 의미, ..의 의미: 하위패키지, 파일명이 DaoImpl로 끝나는 파일을 대상, .*모든 메소드, (..) arguments argument의 개수가 상관없음 -->
+			<aop:pointcut 	expression="execution( * com.ktds..dao.*DaoImpl.*(..))" 
+							id="daoPointCut"/>
+			<!-- around 모든 관점에 대해서 관여를 하겠다. -->
+			<aop:around method="getParam" pointcut-ref="daoPointCut"/>
+		</aop:aspect>
+	</aop:config>
+	
+	<context:component-scan base-package="com.ktds"></context:component-scan>
+	<mvc:annotation-driven/>
+	
+	
+	<mvc:resources location="/WEB-INF/static/js/" mapping="/js/**"/>
+	<mvc:resources location="/WEB-INF/static/css/" mapping="/css/**"/>
+	<mvc:resources location="/WEB-INF/static/img/" mapping="/img/**"/>
+	
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/board/**"/>
+			<bean 	id = "sessionIntercepter"
+					class = "com.ktds.common.SessionIntercepter">
+			</bean>
+		</mvc:interceptor>
+		<mvc:interceptor>
+			<mvc:mapping path="/member/**"/>
+			<mvc:exclude-mapping path="/member/logout"/>
+			<bean 	id = "preventSessionIntercepter"
+					class = "com.ktds.common.PreventSessionInterceptor">
+			</bean>
+		</mvc:interceptor>
+		<mvc:interceptor>
+			<mvc:mapping path="/**"/>
+			<bean id="xssInterceptor"
+				  class="com.ktds.common.XssInterceptor">
+			</bean>
+		</mvc:interceptor>		
+	</mvc:interceptors>
+	
+	<!-- 파라미터 검증하기 위한 bean 생성 -->
+	<bean	id = "localValidatorBean"
+			class = "org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
+	</bean>
+	
+	
+	<bean id = "viewResolver"
+		  class = "org.springframework.web.servlet.view.InternalResourceViewResolver">
+		  <!-- prefix는 접두사 -->
+		  <!-- suffix는 접미사 -->
+		<property name="prefix" value = "/WEB-INF/view/"/>
+		<property name="suffix" value = ".jsp"/>
+	</bean>
+	
+	<!-- settings.properties 파일의 내용을 Bean Container에 적재시키기 -->
+	<context:property-placeholder location="/WEB-INF/spring/settings.properties" />
+	
+		<!-- 
+		BoardDao board.dao = new BoardDaoImpl();
+		BoardServiceImpl board.service = new BoardServiceImpl();
+		boardService.setBoardDao(board.dao); 
+		-->
+
+		<!-- BoardDao board.dao = new BoardDaoImpl(); -->
+		<!-- 하나의 객체 bean -->
+		<!-- 객체의 이름 board.dao가 id
+		뒤에는 type 혹은 class-->
+		<!-- 클래스는 패키지명 + 클래스 즉, import와 동일 -->
+		
+		<!-- <bean id = "board.dao"
+			  class = "com.ktds.board.dao.BoardDaoImpl"></bean> -->
+
+
+		<!-- BoardServiceImpl board.service = new BoardServiceImpl(); -->
+		<!-- setter를 쓸려면 bean과 bean사이에 적어야함. -->
+		<!-- <bean id = "board.service"
+			  class = "com.ktds.board.service.BoardServiceImpl"> -->
+				<!-- boardService.setBoardDao(board.dao); -->
+				<!-- ref -> reference 타입 -->
+				<!-- property setter를 호출 -->
+				
+				<!-- ref, value ==> parameter -->
+				<!-- <property name = "boardDao" ref = "board.dao" /> -->
+				<!-- value -> string -->
+				<!-- <property name = "" value = ""></property> -->
+				
+					  
+	  <!-- 	</bean>
+			  
+	  BoardServiceImpl2 board.service2 = new BoardServiceImpl2(board.dao);
+		<bean id = "board.service2"
+			  class = "com.ktds.board.service.BoardServiceImpl2">
+			  생성자
+			  name은 arguments의 이름
+			<constructor-arg name = "boardDao" ref = "board.dao"/>
+		</bean>   -->
+	<bean 	id = "multipartResolver"
+			class = "org.springframework.web.multipart.commons.CommonsMultipartResolver">
+			<property name="maxUploadSize" value = "104857600"></property>
+			<property name="defaultEncoding" value = "UTF-8"></property>
+	</bean>
+	
+</beans>

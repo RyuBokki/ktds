@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+ <mapper namespace="BoardDao">
+ <!-- 글쓰기 되지않음 myBatis가 가지고 있는 엄격한 정책때문 -->
+ <!-- parameter에는 null이 들어갈 수 없음 -->
+ <!-- 이것을 안쓰려면 parameter를 바꿔야함 -->
+ <!-- 이럴 때 사용하는 게 생성자 하나를 boardVo에 만들어 주자 -->
+ 
+ <!-- public BoardVo() {
+		this.fileName="";
+		this.originFileName="";
+	} -->
+ 	<insert id="insertBoard" 
+ 			parameterType="BoardVo">
+	 		INSERT INTO SPRING.BOARD (
+										   ID
+										   , SUBJECT
+										   , CONTENT
+										   , EMAIL 
+										   , CRT_DT
+										   , MDFY_DT
+										   , FILE_NAME
+										   , ORIGIN_FILE_NAME
+								     ) 
+					VALUES ( 
+							 	   BOARD_ID_SEQ.NEXTVAL
+								   , #{subject}
+								   , #{content}
+								   , #{email}
+								   , SYSDATE
+								   , SYSDATE
+								   , #{fileName}
+								   , #{originFileName}
+					       )
+ 	</insert>
+ 	<select id="selectOneBoard" 
+ 			parameterType="_int"
+ 			resultMap="boardResultMap">
+		 	SELECT	B.ID                 
+					, B.SUBJECT          
+					, B.CONTENT          
+					, B.EMAIL B_EMAIL            
+					, B.CRT_DT           
+					, B.MDFY_DT          
+					, B.FILE_NAME        
+					, B.ORIGIN_FILE_NAME
+					, M.EMAIL M_EMAIL
+					, M.NAME
+					, M.POINT
+			FROM	BOARD B
+					, MEMBERS M
+			WHERE	B.EMAIL = M.EMAIL
+			AND		ID = #{id}
+ 	</select>
+ 	<!-- column들의 값이 어디에 담길것이냐 boardVo -->
+ 	<!-- column명과 변수명이 다르면 jsp파일에 나오지않는다. -->
+ 	<!-- join이 되었다면 resultType가지고는 안됨 -->
+ 	<!-- join된 query의 결과를 받아오기 위해서는 Result Maps를 씀 -->
+ 	<!-- email의 경우 alias로 column명을 바꿨으므로 alias 뒤의 B_EMAIL을 사용 -->
+ 	
+ 	<resultMap type="BoardVo" id="boardResultMap">
+ 		<id property="id" column="ID" />
+ 		<result property="subject" column="SUBJECT" />
+ 		<result property="content" column="CONTENT" />
+ 		<result property="email" column="B_EMAIL" />
+ 		<result property="crtDt" column="CRT_DT" />
+ 		<result property="mdfyDt" column="MDFY_DT" />
+ 		<result property="fileName" column="FILE_NAME" />
+ 		<result property="originFileName" column="ORIGIN_FILE_NAME" />
+ 		<!-- 객체 안에 있는 다른 객체에게 값을 주고싶을때 -->
+ 		<!-- property와 javaType 필요 -->
+ 		<association property="memberVo" javaType="MemberVo">
+	 		<id property="email" column="EMAIL"/>
+	 		<result property="name" column="NAME"/>
+	 		<result property="point" column="POINT"/>
+ 		</association>
+ 	</resultMap>
+ 	<!-- 최대한 빨리 외울것 -->
+ 	<select id="selectAllBoards" 
+ 			parameterType="BoardSearchVO"
+ 			resultMap="boardResultMap">
+	 			SELECT	*
+	 			FROM	(
+	 						SELECT	A.*
+	 								, ROWNUM RNUM
+							FROM	(	
+										SELECT	B.ID                 
+												, B.SUBJECT          
+												, B.CONTENT          
+												, B.EMAIL B_EMAIL            
+												, B.CRT_DT           
+												, B.MDFY_DT          
+												, B.FILE_NAME        
+												, B.ORIGIN_FILE_NAME
+												, M.EMAIL M_EMAIL
+												, M.NAME
+												, M.POINT
+										FROM	BOARD B
+												, MEMBERS M
+										WHERE	B.EMAIL = M.EMAIL
+										<if test="searchKeyword != null and searchKeyword !='' ">
+										AND		SUBJECT LIKE '%' || '${searchKeyword}' || '%' 
+										</if>
+										ORDER	BY ID DESC
+									) A
+							WHERE	ROWNUM <![CDATA[<=]]> #{endRow}
+						) 
+				WHERE RNUM >= #{startRow}
+ 	</select>
+ 		
+ 	<!-- keyword가 들어가있는 총 갯수를 셈 -->	
+ 	<!-- 사용자의 입력값에 따라서 바뀔 수 있는 query를 dynamic query -->
+ 	<select id="selectAllBoardsCount" 
+ 			 parameterType="BoardSearchVO"
+ 			 resultType="_int">
+ 		SELECT	COUNT(1)
+ 		FROM	BOARD B
+ 				, MEMBERS M
+		WHERE	B.EMAIL = M.EMAIL
+		<!-- dynamic sql을 하기 위해 mybatis를 사용 -->
+		<if test="searchKeyword != null and searchKeyword !='' ">
+		AND		SUBJECT LIKE '%' || '${searchKeyword}' || '%' 
+		</if>
+ 	</select>
+ 	
+ 	<delete id="deleteOneBoard" parameterType="_int">
+		 	DELETE
+			FROM	BOARD
+			WHERE	ID = #{id}
+ 	</delete>
+ </mapper>
